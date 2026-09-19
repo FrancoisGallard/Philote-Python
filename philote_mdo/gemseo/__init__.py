@@ -28,4 +28,6 @@
 # therein. The DoD does not exercise any editorial, security, or other
 # control over the information you may find at these locations.
 from .gemseo_to_philote import GEMSEOtoPhiloteDiscipline
+from .philote_to_gemseo import BasePhiloteDiscipline
 from .philote_to_gemseo import PhiloteDiscipline
+from .philote_to_gemseo import PhiloteImplicitDiscipline

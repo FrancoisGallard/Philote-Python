@@ -67,6 +67,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   variable is an array of doubles.  Discrete variables are excluded from
   the Jacobian, including when it is requested in full with
   `compute_all_jacobians=True`.
+- `philote_mdo.gemseo.PhiloteImplicitDiscipline` exposes a remote Philote
+  *implicit* discipline as a GEMSEO discipline with residuals.  Philote
+  names a residual after the output it belongs to, while GEMSEO needs the
+  two names to differ, so each residual is named after its state variable
+  plus a `residual_name_suffix` (`"_residual"` by default).  The state
+  variables are inputs, carrying the current guess, and outputs, echoed
+  next to their residuals, and the mapping between the two is declared in
+  `residual_to_state_variable`, which is what lets a GEMSEO MDA such as
+  `MDANewtonRaphson` solve the state equations.  Linearizing returns the
+  partial derivatives of the residuals with respect to the inputs and to
+  the state variables, from the `ComputeResidualGradients` RPC.  Pass
+  `solve_state_equations=True` when the remote discipline solves its own
+  state equations, in which case the `SolveResiduals` RPC is called and
+  the MDAs are told not to iterate on the state variables.  Discrete
+  inputs are supported; the implicit Philote services never send discrete
+  outputs back, so those are left out of the output grammar.
 - Added examples and tutorials demonstrating interoperability between
   GEMSEO, OpenMDAO and OpenAeroStruct through Philote-MDO.
 
