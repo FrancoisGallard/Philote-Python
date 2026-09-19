@@ -23,6 +23,10 @@ the output values and, if available, the Jacobian.
   `philote_mdo.openmdao.OpenMdaoSubProblem`) and exposes it as a
   normal discipline, usable in an `MDOScenario` or an `MDA` like any
   other.
+- `PhiloteImplicitDiscipline` does the same for an *implicit* Philote
+  server, exposing its residuals to GEMSEO so that an MDA can solve its
+  state equations -- see [Implicit disciplines](#implicit-disciplines)
+  below.
 - `GEMSEOtoPhiloteDiscipline` does the opposite: it wraps a GEMSEO
   `Discipline` so that it can be served over gRPC and called from any
   Philote-MDO client, in particular an OpenMDAO model.
@@ -324,6 +328,95 @@ when it is requested in full with `compute_all_jacobians=True`.
 Philote-MDO does not transfer default values, so a discrete input has no
 default on the client side. It must be part of the input data passed to
 `execute()`, just like a continuous one.
+:::
+
+## Implicit disciplines
+
+A Philote *implicit* discipline does not compute its outputs directly:
+it defines them through the residual equations $R(x, y) = 0$, where $x$
+are the inputs and $y$ the outputs. GEMSEO calls $y$ the **state
+variables**, and expects a discipline with residuals to take them as
+inputs (the current guess), to return them as outputs next to the
+residuals, and to declare the mapping between the two in
+`io.residual_to_state_variable`.
+
+`PhiloteImplicitDiscipline` does exactly that. Philote names a residual
+after the output it belongs to, while GEMSEO needs the two names to
+differ, so a residual is named after its state variable plus
+`residual_name_suffix`, which defaults to `"_residual"`:
+
+```python
+from philote_mdo.gemseo import PhiloteImplicitDiscipline
+
+quadratic = PhiloteImplicitDiscipline(
+    channel=grpc.insecure_channel("localhost:50051")
+)
+
+print(set(quadratic.input_grammar))   # {"a", "b", "c", "x"}
+print(set(quadratic.output_grammar))  # {"x", "x_residual"}
+print(quadratic.io.residual_to_state_variable)  # {"x_residual": "x"}
+```
+
+Executing the discipline sends the inputs and the current state to the
+`ComputeResiduals` RPC and returns the residuals; linearizing it sends
+them to `ComputeResidualGradients` and returns $\partial R/\partial x$ and
+$\partial R/\partial y$. That is all a GEMSEO MDA needs to solve the state
+equations, for instance with a Newton solver, whose step is
+$-\left[\partial R/\partial y\right]^{-1} R$:
+
+```python
+from gemseo.mda.newton_raphson import MDANewtonRaphson
+
+mda = MDANewtonRaphson([quadratic, another_discipline])
+out = mda.execute()
+
+print(out["x"], out["x_residual"])
+```
+
+When the remote discipline is able to solve its own state equations, pass
+`solve_state_equations=True`: executing the discipline then calls the
+`SolveResiduals` RPC and returns the solved state variables, and
+`io.state_equations_are_solved` tells the MDAs not to iterate on them.
+
+```python
+quadratic = PhiloteImplicitDiscipline(
+    channel=grpc.insecure_channel("localhost:50051"),
+    solve_state_equations=True,
+)
+
+out = quadratic.execute({"a": array([1.0]), "b": array([-5.0]),
+                         "c": array([6.0]), "x": array([1.0])})
+
+print(out["x"])  # 3.0, a root of x**2 - 5 * x + 6
+```
+
+:::note
+The discrete inputs of an implicit discipline are part of the input
+grammar and are sent with every residual, solve and gradient request. The
+implicit Philote services never stream discrete outputs back, so the
+discrete outputs of the remote discipline, if any, are left out of the
+output grammar.
+:::
+
+:::warning
+Two defects of GEMSEO 6.3.3 limit what an MDA can do with a discipline
+that has residuals. Both are upstream, and neither affects the
+discipline's own residuals or Jacobian, which are exact.
+
+1. **A lone implicit discipline cannot be solved.** Its state variable
+   makes it self-coupled, but `CouplingStructure.is_self_coupled`
+   subtracts the state variables from the inputs that are also outputs,
+   so the discipline is reported as weakly coupled and
+   `MDANewtonRaphson` rejects it with *"has weakly coupled
+   disciplines"*. Couple it with at least one other discipline, as in the
+   example above, so that the group is a genuine cycle.
+2. **Total derivatives across a state variable come out as zero.** In
+   `JacobianAssembly.total_derivatives`, the columns of `dfun_dy` are
+   assembled over `couplings_and_res` while the solution of the coupled
+   linear system is ordered by `couplings_and_states`, so the state block
+   of $\partial f/\partial y$ is looked up under the residual name and
+   never found. Differentiate an MDA that contains an implicit discipline
+   with care, and check the result against finite differences.
 :::
 
 ## Where to go next
