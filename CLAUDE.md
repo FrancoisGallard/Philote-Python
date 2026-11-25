@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Philote-Python is the reference Python implementation of the Philote-MDO standard — a gRPC-based protocol for distributed multidisciplinary analysis and optimization. It provides explicit and implicit discipline base classes, the corresponding servers and clients, and OpenMDAO bindings (`RemoteExplicitComponent`, `RemoteImplicitComponent`, `OpenMdaoSubProblem`).
+Philote-Python is the reference Python implementation of the Philote-MDO standard — a gRPC-based protocol for distributed multidisciplinary analysis and optimization. It provides explicit and implicit discipline base classes, the corresponding servers and clients, OpenMDAO bindings (`RemoteExplicitComponent`, `RemoteImplicitComponent`, `OpenMdaoSubProblem`), GEMSEO bindings (`PhiloteDiscipline`, `GEMSEOtoPhiloteDiscipline`) and CoSApp bindings (`PhiloteSystem`, `CoSAppToPhiloteDiscipline`).
 
 ## Build System
 
@@ -10,6 +10,7 @@ Philote-Python is the reference Python implementation of the Philote-MDO standar
 - Python 3.10 - 3.12
 - `numpy`, `scipy`, `grpcio`, `protobuf` (installed automatically)
 - `openmdao` (only for the OpenMDAO bindings and integration tests)
+- `gemseo` / `cosapp` (only for the GEMSEO / CoSApp bindings and their tests)
 
 ### Install
 ```bash
@@ -38,6 +39,8 @@ Some tests require OpenMDAO; install it first if you want full coverage.
 philote_mdo/
 ├── general/        # Core discipline / client / server base classes
 ├── openmdao/       # OpenMDAO bindings (RemoteExplicit/Implicit, OpenMdaoSubProblem)
+├── gemseo/         # GEMSEO bindings (PhiloteDiscipline, GEMSEOtoPhiloteDiscipline)
+├── cosapp/         # CoSApp bindings (PhiloteSystem, CoSAppToPhiloteDiscipline)
 ├── examples/       # Reference disciplines (Paraboloid, Quadratic, Sellar, Rosenbrock)
 ├── generated/      # Auto-generated gRPC stubs (do not edit by hand)
 └── utils/          # Shared utilities

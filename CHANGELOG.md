@@ -71,6 +71,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   default value.
 - Added examples and tutorials demonstrating interoperability between
   GEMSEO, OpenMDAO and OpenAeroStruct through Philote-MDO.
+- Added a CoSApp interface (`philote_mdo.cosapp`, installed with the
+  `cosapp` extra).  `PhiloteSystem` wraps a remote Philote explicit
+  discipline as a CoSApp `System`, with its inputs and outputs gathered in
+  ports or declared as inwards and outwards.  `CoSAppToPhiloteDiscipline`
+  wraps a CoSApp `System` as a Philote explicit discipline, running its
+  drivers on each evaluation, with a Jacobian approximated by forward
+  finite differences.  Only continuous variables are supported.  The
+  example `examples/cosapp_and_gemseo.py` and a "Working with CoSApp" docs
+  page show both directions.
 
 ### Bug Fixes
 

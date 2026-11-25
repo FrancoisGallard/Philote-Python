@@ -24,6 +24,7 @@ To run the unit and integration tests, you will need:
 
 - [OpenMDAO](https://github.com/OpenMDAO/OpenMDAO) (also installable via pip)
 - [GEMSEO](https://gitlab.com/gemseo/dev/gemseo) (also installable via pip)
+- [CoSApp](https://cosapp.readthedocs.io) (also installable via pip)
 
 ## Compiling Definitions and Installation
 

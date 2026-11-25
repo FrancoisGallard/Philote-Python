@@ -37,6 +37,11 @@ const sidebars: SidebarsConfig = {
         },
         {
             type: "category",
+            label: "Working with CoSApp",
+            items: ["cosapp/cosapp"],
+        },
+        {
+            type: "category",
             label: "About",
             items: ["about/license"],
         },
